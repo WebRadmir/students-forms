@@ -1,0 +1,90 @@
+<div class="flex flex-col">
+  <div class="overflow-x-auto sm:mx-0.5 lg:mx-0.5">
+    <div class="py-2 inline-block min-w-full sm:px-6 lg:px-8">
+      <div class="overflow-hidden">
+        <table class="min-w-full">
+          <thead class="bg-gray-200 border-b">
+            <tr>
+              <th
+                class="text-base text-center font-medium text-gray-900 px-6 py-4"
+              >
+                Номер
+              </th>
+              <th
+                class="text-base text-center font-medium text-gray-900 px-6 py-4"
+              >
+                Количество студентов
+              </th>
+              <th
+                class="text-base text-center font-medium text-gray-900 px-6 py-4"
+              >
+                Действия
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              class="bg-white border-b transition duration-300 ease-in-out hover:bg-gray-100"
+              *ngFor="let group of groups"
+            >
+              <td
+                class="px-6 py-4 whitespace-nowrap text-base text-center font-medium text-gray-900"
+              >
+                {{ group.groupNumber }}
+              </td>
+              <td
+                class="px-6 py-4 whitespace-nowrap text-base text-center font-medium text-gray-900"
+              >
+                {{ group.numberOfStudents }}
+              </td>
+              <td class="px-6 py-4 text-center text-gray-900">
+                <button (click)="editGroup(group.id)">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 32 32"
+                    width="32px"
+                    height="32px"
+                  >
+                    <path
+                      d="M 23.90625 3.96875 C 22.859375 3.96875 21.8125 4.375 21 5.1875 L 5.1875 21 L 5.125 21.3125 L 4.03125 26.8125 L 3.71875 28.28125 L 5.1875 27.96875 L 10.6875 26.875 L 11 26.8125 L 26.8125 11 C 28.4375 9.375 28.4375 6.8125 26.8125 5.1875 C 26 4.375 24.953125 3.96875 23.90625 3.96875 Z M 23.90625 5.875 C 24.410156 5.875 24.917969 6.105469 25.40625 6.59375 C 26.378906 7.566406 26.378906 8.621094 25.40625 9.59375 L 24.6875 10.28125 L 21.71875 7.3125 L 22.40625 6.59375 C 22.894531 6.105469 23.402344 5.875 23.90625 5.875 Z M 20.3125 8.71875 L 23.28125 11.6875 L 11.1875 23.78125 C 10.53125 22.5 9.5 21.46875 8.21875 20.8125 Z M 6.9375 22.4375 C 8.136719 22.921875 9.078125 23.863281 9.5625 25.0625 L 6.28125 25.71875 Z"
+                    />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<form
+  [formGroup]="groupsForm"
+  (ngSubmit)="addNewGroup()"
+  class="py-2 sm:px-6 lg:px-8 flex flex-col max-w-[300px]"
+>
+  <input
+    type="text"
+    id="groupNumber"
+    formControlName="groupNumber"
+    class="py-1 px-4 border rounded-md mb-2"
+    placeholder="Введите номер группы"
+  />
+  <button
+    type="submit"
+    [disabled]="groupsForm.invalid"
+    class="py-1 px-4 bg-blue-500 text-white"
+  >
+    Добавить группу
+  </button>
+  <div
+    *ngIf="
+      groupsForm.get('groupNumber')?.hasError('invalidGroupNumber') &&
+      groupsForm.get('groupNumber')?.touched
+    "
+    class="text-red-500"
+  >
+    Неверный формат группы. Введите номер в формате NN-NN, где N это число
+  </div>
+</form>
