@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-
+import { Subscription, catchError, throwError } from 'rxjs';
 import { Group } from 'src/app/data';
 import { BackendService } from 'src/app/services/backend.service';
 import { groupNumberValidator } from 'src/app/my.validators';
@@ -11,9 +11,11 @@ import { groupNumberValidator } from 'src/app/my.validators';
   templateUrl: './group-list.component.html',
   styleUrls: ['./group-list.component.scss'],
 })
-export class GroupListComponent implements OnInit {
+export class GroupListComponent implements OnInit, OnDestroy {
   groupsForm: FormGroup;
   groups: Group[] = [];
+  private loadGroupSubscription: Subscription | null = null;
+  private createGroupSubscription: Subscription | null = null;
 
   constructor(
     private backendService: BackendService,
@@ -30,19 +32,31 @@ export class GroupListComponent implements OnInit {
   }
 
   loadGroups(): void {
-    this.backendService.listGroups().subscribe((groups) => {
-      this.groups = groups;
-      this.sortGroupsByCreatedAt();
-    });
+    this.loadGroupSubscription = this.backendService
+      .listGroups()
+      .subscribe((groups) => {
+        this.groups = groups;
+        this.sortGroupsByCreatedAt();
+      });
   }
 
   addNewGroup(): void {
     if (this.groupsForm.valid) {
-      const newGroupNumber = this.groupsForm.get('groupNumber')?.value;
-      this.backendService.createGroup(newGroupNumber).subscribe((groups) => {
-        const newGroupId = groups[groups.length - 1].id;
-        this.editGroup(newGroupId);
-      });
+      const newGroupNumber: string = this.groupsForm.get('groupNumber')?.value;
+
+      const createGroupSubscription = this.backendService
+        .createGroup(newGroupNumber)
+        .pipe(
+          catchError(() => {
+            const error = new Error('Произошла ошибка при создании группы.');
+            return throwError(() => error);
+          })
+        )
+        .subscribe((groups) => {
+          const newGroupId: number = groups[groups.length - 1].id;
+          this.editGroup(newGroupId);
+        });
+
       this.groupsForm.reset();
     }
   }
@@ -52,8 +66,15 @@ export class GroupListComponent implements OnInit {
   }
 
   sortGroupsByCreatedAt() {
-    this.groups.sort((a, b) => {
-      return a.createdAt.getTime() - b.createdAt.getTime();
-    });
+    this.groups.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
+
+  ngOnDestroy(): void {
+    if (this.loadGroupSubscription) {
+      this.loadGroupSubscription.unsubscribe();
+    }
+    if (this.createGroupSubscription) {
+      this.createGroupSubscription.unsubscribe();
+    }
   }
 }

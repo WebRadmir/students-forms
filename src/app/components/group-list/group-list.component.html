@@ -1,3 +1,8 @@
+<h1
+  class="mb-2 mt-0 text-4xl font-medium leading-tight text-primary text-cyan-700"
+>
+  Группы университета ScaleApps
+</h1>
 <div class="flex flex-col">
   <div class="overflow-x-auto sm:mx-0.5 lg:mx-0.5">
     <div class="py-2 inline-block min-w-full sm:px-6 lg:px-8">
@@ -78,13 +83,13 @@
   >
     Добавить группу
   </button>
-  <div
-    *ngIf="
-      groupsForm.get('groupNumber')?.hasError('invalidGroupNumber') &&
-      groupsForm.get('groupNumber')?.touched
-    "
-    class="text-red-500"
-  >
-    Неверный формат группы. Введите номер в формате NN-NN, где N это число
-  </div>
 </form>
+<div
+  *ngIf="
+    groupsForm.get('groupNumber')?.hasError('invalidGroupNumber') &&
+    groupsForm.get('groupNumber')?.touched
+  "
+  class="text-red-500 py-2 sm:px-6 lg:px-8"
+>
+  Неверный формат группы. Введите номер в формате NN-NN, где N это число
+</div>

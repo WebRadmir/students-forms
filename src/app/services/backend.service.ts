@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable, map, timer } from 'rxjs';
 import { Group, Student } from '../data';
 import { fakeGroups, fakeStudents } from '../data';
-import { BehaviorSubject, Observable, map, timer } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -13,13 +12,12 @@ export class BackendService {
   private groups: Group[] = [];
   private groupsSubject = new BehaviorSubject<Group[]>(this.groups);
 
-  constructor(private route: ActivatedRoute) {
+  constructor() {
     timer(50)
       .pipe(
         map(() => {
           this.students = fakeStudents;
           this.studentsSubject.next(this.students);
-
           this.groups = fakeGroups;
           this.groupsSubject.next(this.groups);
         })
@@ -31,7 +29,7 @@ export class BackendService {
     return this.groupsSubject.asObservable().pipe(
       map((groups) => {
         return groups.map((group) => {
-          const studentsInGroup = this.students.filter(
+          const studentsInGroup: Student[] = this.students.filter(
             (student) => student.groupId === group.id
           );
           return {
@@ -46,7 +44,7 @@ export class BackendService {
   createGroup(newGroupNumber: string): Observable<Group[]> {
     return this.groupsSubject.asObservable().pipe(
       map((groups) => {
-        const maxId = Math.max(...groups.map((group) => group.id), 0);
+        const maxId: number = Math.max(...groups.map((group) => group.id), 0);
         const newGroup: Group = {
           id: maxId + 1,
           groupNumber: newGroupNumber,
@@ -64,7 +62,10 @@ export class BackendService {
   }
 
   createStudent(newStudentName: string, groupId: number): void {
-    const maxId = Math.max(...this.students.map((student) => student.id), 0);
+    const maxId: number = Math.max(
+      ...this.students.map((student) => student.id),
+      0
+    );
 
     const newStudent: Student = {
       id: maxId + 1,
@@ -74,7 +75,6 @@ export class BackendService {
     };
     this.students.push(newStudent);
     this.studentsSubject.next(this.students);
-    console.log(this.studentsSubject);
   }
 
   deleteStudent(studentIdtoDelete: number): void {
