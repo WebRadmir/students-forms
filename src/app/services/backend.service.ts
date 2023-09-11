@@ -1,5 +1,12 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, map, timer } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  catchError,
+  map,
+  throwError,
+  timer,
+} from 'rxjs';
 import { Group, Student } from '../data';
 import { fakeGroups, fakeStudents } from '../data';
 
@@ -20,6 +27,10 @@ export class BackendService {
           this.studentsSubject.next(this.students);
           this.groups = fakeGroups;
           this.groupsSubject.next(this.groups);
+        }),
+        catchError((error) => {
+          console.error('Произошла ошибка в constructor():', error);
+          return throwError(() => error);
         })
       )
       .subscribe();
@@ -37,6 +48,10 @@ export class BackendService {
             numberOfStudents: studentsInGroup.length,
           };
         });
+      }),
+      catchError((error) => {
+        console.error('Произошла ошибка в listGroups():', error);
+        return throwError(() => error);
       })
     );
   }
@@ -53,12 +68,21 @@ export class BackendService {
         };
         this.groups.push(newGroup);
         return groups;
+      }),
+      catchError((error) => {
+        console.error('Произошла ошибка в createGroup():', error);
+        return throwError(() => error);
       })
     );
   }
 
   listStudents(): Observable<Student[]> {
-    return this.studentsSubject.asObservable();
+    return this.studentsSubject.asObservable().pipe(
+      catchError((error) => {
+        console.error('Произошла ошибка в listStudents():', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   createStudent(newStudentName: string, groupId: number): void {
@@ -88,6 +112,10 @@ export class BackendService {
     return this.groupsSubject.asObservable().pipe(
       map((groups) => {
         return groups.find((group) => group.id === groupId);
+      }),
+      catchError((error) => {
+        console.error('Произошла ошибка в getGroupById():', error);
+        return throwError(() => error);
       })
     );
   }

@@ -39,6 +39,10 @@ export class StudentListComponent implements OnInit, OnDestroy {
               return EMPTY;
             })
           );
+        }),
+        catchError((error) => {
+          console.error('Произошла ошибка в ngOnInit():', error);
+          return throwError(() => error);
         })
       )
       .subscribe((group) => {
@@ -53,10 +57,20 @@ export class StudentListComponent implements OnInit, OnDestroy {
   }
 
   loadStudents(groupId: number): void {
-    this.backendService.listStudents().subscribe((students) => {
-      this.students = students.filter((student) => student.groupId === groupId);
-      this.sortStudentsByName();
-    });
+    this.backendService
+      .listStudents()
+      .pipe(
+        catchError((error) => {
+          console.error('Произошла ошибка в loadStudents():', error);
+          return throwError(() => error);
+        })
+      )
+      .subscribe((students) => {
+        this.students = students.filter(
+          (student) => student.groupId === groupId
+        );
+        this.sortStudentsByName();
+      });
   }
 
   addNewStudent(newStudentName: string): void {

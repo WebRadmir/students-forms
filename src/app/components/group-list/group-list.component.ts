@@ -34,6 +34,12 @@ export class GroupListComponent implements OnInit, OnDestroy {
   loadGroups(): void {
     this.loadGroupSubscription = this.backendService
       .listGroups()
+      .pipe(
+        catchError((error) => {
+          console.error('Произошла ошибка в loadGroups():', error);
+          return throwError(() => error);
+        })
+      )
       .subscribe((groups) => {
         this.groups = groups;
         this.sortGroupsByCreatedAt();
@@ -43,12 +49,11 @@ export class GroupListComponent implements OnInit, OnDestroy {
   addNewGroup(): void {
     if (this.groupsForm.valid) {
       const newGroupNumber: string = this.groupsForm.get('groupNumber')?.value;
-
-      const createGroupSubscription = this.backendService
+      this.createGroupSubscription = this.backendService
         .createGroup(newGroupNumber)
         .pipe(
-          catchError(() => {
-            const error = new Error('Произошла ошибка при создании группы.');
+          catchError((error) => {
+            console.error('Произошла ошибка в addNewGroup():', error);
             return throwError(() => error);
           })
         )
