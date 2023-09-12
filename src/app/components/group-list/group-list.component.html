@@ -30,7 +30,7 @@
           <tbody>
             <tr
               class="bg-white border-b transition duration-300 ease-in-out hover:bg-gray-100"
-              *ngFor="let group of groups"
+              *ngFor="let group of groupListObs | async"
             >
               <td
                 class="px-6 py-4 whitespace-nowrap text-base text-center font-medium text-gray-900"

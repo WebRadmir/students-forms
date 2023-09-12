@@ -1,12 +1,6 @@
 import { Injectable } from '@angular/core';
-import {
-  BehaviorSubject,
-  Observable,
-  catchError,
-  map,
-  throwError,
-  timer,
-} from 'rxjs';
+import { Observable, catchError, map, throwError, timer } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Group, Student } from '../data';
 import { fakeGroups, fakeStudents } from '../data';
 
@@ -14,109 +8,116 @@ import { fakeGroups, fakeStudents } from '../data';
   providedIn: 'root',
 })
 export class BackendService {
-  private students: Student[] = [];
-  private studentsSubject = new BehaviorSubject<Student[]>(this.students);
-  private groups: Group[] = [];
-  private groupsSubject = new BehaviorSubject<Group[]>(this.groups);
+  private students: Student[] = fakeStudents;
+  private groups: Group[] = fakeGroups;
 
-  constructor() {
-    timer(50)
+  constructor() {}
+
+  public handleError(error: HttpErrorResponse): Observable<any> {
+    return throwError(() => error);
+  }
+
+  public listGroups(): Observable<Group[]> {
+    return timer(50)
       .pipe(
         map(() => {
-          this.students = fakeStudents;
-          this.studentsSubject.next(this.students);
-          this.groups = fakeGroups;
-          this.groupsSubject.next(this.groups);
-        }),
-        catchError((error) => {
-          console.error('Произошла ошибка в constructor():', error);
-          return throwError(() => error);
+          return this.groups.map((group) => {
+            const studentsInGroup = this.students.filter(
+              (student) => student.groupId === group.id
+            );
+            return {
+              ...group,
+              numberOfStudents: studentsInGroup.length,
+            };
+          });
         })
       )
-      .subscribe();
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
-  listGroups(): Observable<Group[]> {
-    return this.groupsSubject.asObservable().pipe(
-      map((groups) => {
-        return groups.map((group) => {
-          const studentsInGroup: Student[] = this.students.filter(
-            (student) => student.groupId === group.id
+  public createGroup(newGroupNumber: string): Observable<Group[]> {
+    return timer(50)
+      .pipe(
+        map(() => {
+          const maxId: number = Math.max(
+            ...this.groups.map((group) => group.id),
+            0
+          );
+          const newGroup: Group = {
+            id: maxId + 1,
+            groupNumber: newGroupNumber,
+            numberOfStudents: 0,
+            createdAt: new Date(),
+          };
+          this.groups.push(newGroup);
+          return this.groups;
+        })
+      )
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  public listStudents(): Observable<Student[]> {
+    return timer(50)
+      .pipe(
+        map(() => {
+          return this.students;
+        })
+      )
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  public createStudent(
+    newStudentName: string,
+    groupId: number
+  ): Observable<{ success: boolean; data: Student }> {
+    return timer(50)
+      .pipe(
+        map(() => {
+          const maxId: number = Math.max(
+            ...this.students.map((student) => student.id),
+            0
+          );
+
+          const newStudent: Student = {
+            id: maxId + 1,
+            name: newStudentName,
+            admissionDate: new Date(),
+            groupId,
+          };
+          this.students.push(newStudent);
+          return {
+            success: true,
+            data: newStudent,
+          };
+        })
+      )
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  public deleteStudent(
+    studentIdtoDelete: number
+  ): Observable<{ success: boolean }> {
+    return timer(50)
+      .pipe(
+        map(() => {
+          this.students = this.students.filter(
+            (student) => student.id !== studentIdtoDelete
           );
           return {
-            ...group,
-            numberOfStudents: studentsInGroup.length,
+            success: true,
           };
-        });
-      }),
-      catchError((error) => {
-        console.error('Произошла ошибка в listGroups():', error);
-        return throwError(() => error);
-      })
-    );
+        })
+      )
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
-  createGroup(newGroupNumber: string): Observable<Group[]> {
-    return this.groupsSubject.asObservable().pipe(
-      map((groups) => {
-        const maxId: number = Math.max(...groups.map((group) => group.id), 0);
-        const newGroup: Group = {
-          id: maxId + 1,
-          groupNumber: newGroupNumber,
-          numberOfStudents: 0,
-          createdAt: new Date(),
-        };
-        this.groups.push(newGroup);
-        return groups;
-      }),
-      catchError((error) => {
-        console.error('Произошла ошибка в createGroup():', error);
-        return throwError(() => error);
-      })
-    );
-  }
-
-  listStudents(): Observable<Student[]> {
-    return this.studentsSubject.asObservable().pipe(
-      catchError((error) => {
-        console.error('Произошла ошибка в listStudents():', error);
-        return throwError(() => error);
-      })
-    );
-  }
-
-  createStudent(newStudentName: string, groupId: number): void {
-    const maxId: number = Math.max(
-      ...this.students.map((student) => student.id),
-      0
-    );
-
-    const newStudent: Student = {
-      id: maxId + 1,
-      name: newStudentName,
-      admissionDate: new Date(),
-      groupId,
-    };
-    this.students.push(newStudent);
-    this.studentsSubject.next(this.students);
-  }
-
-  deleteStudent(studentIdtoDelete: number): void {
-    this.students = this.students.filter(
-      (student) => student.id !== studentIdtoDelete
-    );
-    this.studentsSubject.next(this.students);
-  }
-
-  getGroupById(groupId: number): Observable<Group | undefined> {
-    return this.groupsSubject.asObservable().pipe(
-      map((groups) => {
-        return groups.find((group) => group.id === groupId);
-      }),
-      catchError((error) => {
-        console.error('Произошла ошибка в getGroupById():', error);
-        return throwError(() => error);
-      })
-    );
+  public getGroupById(groupId: number): Observable<Group | undefined> {
+    return timer(50)
+      .pipe(
+        map(() => {
+          return this.groups.find((group) => group.id === groupId);
+        })
+      )
+      .pipe(catchError(this.handleError.bind(this)));
   }
 }

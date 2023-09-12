@@ -1,7 +1,15 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { EMPTY, Subscription, catchError, switchMap, throwError } from 'rxjs';
+import {
+  BehaviorSubject,
+  EMPTY,
+  Observable,
+  catchError,
+  switchMap,
+  take,
+  throwError,
+} from 'rxjs';
 import { Student } from 'src/app/data';
 import { BackendService } from 'src/app/services/backend.service';
 
@@ -10,12 +18,21 @@ import { BackendService } from 'src/app/services/backend.service';
   templateUrl: './student-list.component.html',
   styleUrls: ['./student-list.component.scss'],
 })
-export class StudentListComponent implements OnInit, OnDestroy {
-  studentsForm: FormGroup;
-  students: Student[] = [];
-  isGroup: boolean = false;
-  groupNumber: string = '';
-  private routeSubscription: Subscription | undefined;
+export class StudentListComponent implements OnInit {
+  public studentsForm: FormGroup;
+  public isGroup: boolean = false;
+  public groupNumber: string = '';
+
+  private _studentsListObs$ = new BehaviorSubject<Student[]>([]);
+  public get studentsList(): Student[] {
+    return this._studentsListObs$.getValue();
+  }
+  public set studentsList(students: Student[]) {
+    this._studentsListObs$.next(students);
+  }
+  public get studentsListObs(): Observable<Student[]> {
+    return this._studentsListObs$.asObservable();
+  }
 
   constructor(
     private backendService: BackendService,
@@ -29,7 +46,8 @@ export class StudentListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.routeSubscription = this.route.queryParams
+    this.route.queryParams
+      .pipe(take(1))
       .pipe(
         switchMap((params) => {
           const groupId = +params['groupId'];
@@ -56,9 +74,10 @@ export class StudentListComponent implements OnInit, OnDestroy {
       });
   }
 
-  loadStudents(groupId: number): void {
+  public loadStudents(groupId: number): void {
     this.backendService
       .listStudents()
+      .pipe(take(1))
       .pipe(
         catchError((error) => {
           console.error('Произошла ошибка в loadStudents():', error);
@@ -66,36 +85,58 @@ export class StudentListComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe((students) => {
-        this.students = students.filter(
+        this.studentsList = students.filter(
           (student) => student.groupId === groupId
         );
         this.sortStudentsByName();
       });
   }
 
-  addNewStudent(newStudentName: string): void {
+  public addNewStudent(newStudentName: string): void {
     if (this.studentsForm.valid) {
       const groupId: number = +this.route.snapshot.queryParams['groupId'];
-      this.backendService.createStudent(newStudentName, groupId);
-      this.studentsForm.reset();
+      this.backendService
+        .createStudent(newStudentName, groupId)
+        .pipe(take(1))
+        .pipe(
+          catchError((error) => {
+            console.error('Произошла ошибка в addNewStudent():', error);
+            return throwError(() => error);
+          })
+        )
+        .subscribe((resp) => {
+          if (resp.success) {
+            this.studentsList.push(resp.data);
+            this.studentsForm.reset();
+          }
+        });
     }
   }
 
-  deleteStudent(id: number): void {
-    this.backendService.deleteStudent(id);
+  public deleteStudent(id: number): void {
+    this.backendService
+      .deleteStudent(id)
+      .pipe(take(1))
+      .pipe(
+        catchError((error) => {
+          console.error('Произошла ошибка в deleteStudent():', error);
+          return throwError(() => error);
+        })
+      )
+      .subscribe((resp) => {
+        if (resp.success) {
+          this.studentsList = this.studentsList.filter(
+            (student) => student.id !== id
+          );
+        }
+      });
   }
 
-  sortStudentsByName() {
-    this.students.sort((a, b) => a.name.localeCompare(b.name));
+  public sortStudentsByName() {
+    this.studentsList.sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  goToGroupsList() {
+  public goToGroupsList() {
     this.router.navigate(['']);
-  }
-
-  ngOnDestroy(): void {
-    if (this.routeSubscription) {
-      this.routeSubscription.unsubscribe();
-    }
   }
 }
