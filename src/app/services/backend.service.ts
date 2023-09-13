@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable, catchError, map, throwError, timer } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, catchError, map, throwError, timer } from 'rxjs';
 import { Group, Student } from '../data';
 import { fakeGroups, fakeStudents } from '../data';
 
@@ -18,24 +18,30 @@ export class BackendService {
   }
 
   public listGroups(): Observable<Group[]> {
-    return timer(50)
-      .pipe(
-        map(() => {
-          return this.groups.map((group) => {
-            const studentsInGroup = this.students.filter(
-              (student) => student.groupId === group.id
-            );
-            return {
-              ...group,
-              numberOfStudents: studentsInGroup.length,
-            };
-          });
-        })
-      )
-      .pipe(catchError(this.handleError.bind(this)));
+    // Имитируем задержку ответа сервера в 50 мс
+    return (
+      timer(50)
+        .pipe(
+          map(() => {
+            return this.groups.map((group) => {
+              const studentsInGroup = this.students.filter(
+                (student) => student.groupId === group.id
+              );
+              return {
+                ...group,
+                numberOfStudents: studentsInGroup.length,
+              };
+            });
+          })
+        )
+        // Имитируем обработку ошибок, если бы вместо timer был сетевой запрос
+        .pipe(catchError(this.handleError.bind(this)))
+    );
   }
 
-  public createGroup(newGroupNumber: string): Observable<Group[]> {
+  public createGroup(
+    newGroupNumber: string
+  ): Observable<{ success: boolean; data: Group }> {
     return timer(50)
       .pipe(
         map(() => {
@@ -50,7 +56,10 @@ export class BackendService {
             createdAt: new Date(),
           };
           this.groups.push(newGroup);
-          return this.groups;
+          return {
+            success: true,
+            data: newGroup,
+          };
         })
       )
       .pipe(catchError(this.handleError.bind(this)));

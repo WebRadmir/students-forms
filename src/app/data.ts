@@ -37,6 +37,12 @@ export const fakeGroups: Group[] = [
     numberOfStudents: 0,
     createdAt: new Date('2023-01-19'),
   },
+  {
+    id: 7,
+    groupNumber: '19-04',
+    numberOfStudents: 0,
+    createdAt: new Date('2023-04-19'),
+  },
 ];
 
 export const fakeStudents: Student[] = [

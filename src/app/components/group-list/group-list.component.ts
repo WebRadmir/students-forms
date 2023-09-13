@@ -73,12 +73,12 @@ export class GroupListComponent implements OnInit {
             return throwError(() => error);
           })
         )
-        .subscribe((groups) => {
-          const newGroupId: number = groups[groups.length - 1].id;
-          this.editGroup(newGroupId);
+        .subscribe((resp) => {
+          if (resp.success) {
+            this.editGroup(resp.data.id);
+            this.groupsForm.reset();
+          }
         });
-
-      this.groupsForm.reset();
     }
   }
 
